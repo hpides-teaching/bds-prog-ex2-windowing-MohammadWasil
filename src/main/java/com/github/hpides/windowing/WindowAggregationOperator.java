@@ -57,6 +57,22 @@ public class WindowAggregationOperator {
         // YOUR CODE HERE
         //
         // YOUR CODE HERE END
+        private final long value;
+        private final long timestamp;
+        private final long length;
+        //private final SumAggregateFunction sumFn;
+        private final long sum;
+        // Get the value of the timestamp and the value
+        this.value = event.getValue();
+        this.timestamp = event.getTimestamp();
+        
+        this.length = this.window.getLength();
+        
+        // maybe if else to check whether tumbling window  or other window, nested ifelse for type of aggregation function.
+        // Lets say, we are doing sum aggregation.
+        //final AggregateFunction sumFn = new SumAggregateFunction();
+	
+	this.sum = this.aggregateFunction.aggregate(this.value);
 
     }
 
@@ -82,7 +98,15 @@ public class WindowAggregationOperator {
      */
     public List<ResultWindow> processWatermark(final long watermarkTimestamp) {
         // YOUR CODE HERE
-        return null;
+        final List<ResultWindow> results = new ResultWindow();
+
+        for(int i =0; i < 3 ; i++)
+        {
+		// update results
+		results[i] = new ResultWindow( i*this.length, (i+1)*this.length, this.sum);
+        }
+        
+        return results;
         // YOUR CODE HERE END
     }
 }
