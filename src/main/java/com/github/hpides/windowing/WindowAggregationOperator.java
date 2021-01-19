@@ -1,6 +1,4 @@
 package com.github.hpides.windowing;
-
-import java.security.Timestamp;
 import java.util.*;
 
 /**
@@ -29,7 +27,7 @@ public class WindowAggregationOperator {
     private final AggregateFunction aggregateFunction;
     
     private long length;                // the length of the window.
-    private long slide = 5L;            // the slide of the window.
+    
     private long timeStamp;             // Timestamp of each event.
     private long value;                 // value of each events.
 
@@ -39,16 +37,22 @@ public class WindowAggregationOperator {
 
     // /tumbling window
     private HashMap<Long, Long> inOrderStreamTestSumHash = new HashMap<Long, Long>();     // Hash Maps for tumbling window.
+
    
-    //private List<Long> slidingWindow = Arrays.asList(new Long[10]);
-    private HashMap<Long, Long> slidingWindow = new HashMap<Long, Long>();
-
-
-
+    // Sliding window
+    private long slide;            // the slide of the window.
     private HashMap<Long, Long> slidingEventHash = new HashMap<Long, Long>();
-    private List<Map<Long, Long>> slidingEventListOfHash = new ArrayList<Map<Long, Long>>();
+    //private List<Map<Long, Long>> slidingEventListOfHash = new ArrayList<Map<Long, Long>>();
 
-    //public ResultWindow resultWindow; // = new ResultWindow(1L, 1L, 1L);
+    // session window
+    private long gap;
+    private HashMap<Long, Long> sessionEventHash = new HashMap<Long, Long>();
+    private List<Long> sessionListTimeStamp = new ArrayList<Long>();
+    private List<Long> sessionListValue = new ArrayList<Long>();
+
+    private List<List<Long>> sessionEventTimeStampListOfList = new ArrayList<List<Long>>();
+    private List<List<Long>> sessionEventValueListOfList = new ArrayList<List<Long>>();
+
     /**
      * This constructor is called to create a new WindowAggregationOperator with a given window type and aggregation
      * function. You will possibly need to extend this to initialize some variables but do not change the signature.
@@ -119,14 +123,14 @@ public class WindowAggregationOperator {
                 timeStamp = event.getTimestamp();
                 value     = event.getValue();
                 
-                            if( slidingEventHash.containsKey(timeStamp))
-                            {
-                                slidingEventHash.put(timeStamp, value);
-                            }
-                            else
-                            {
-                                slidingEventHash.putIfAbsent(timeStamp, value);		
-                            }
+                if( slidingEventHash.containsKey(timeStamp))
+                {
+                    slidingEventHash.put(timeStamp, value);
+                }
+                else
+                {
+                    slidingEventHash.putIfAbsent(timeStamp, value);		
+                }
         
                 /*
                 //System.out.println(inOrderStreamTestSumHash);
@@ -154,6 +158,78 @@ public class WindowAggregationOperator {
                 */
             //}
         }
+
+        // Session window
+        if(this.window.getClass().getSimpleName().equals("SessionWindow"))
+        {
+            //System.out.println(sessionEventTimeStampListOfList + "first");
+
+            gap = ((SessionWindow) this.window).getGap();
+            //long i=0L;
+            timeStamp = event.getTimestamp();
+            value     = event.getValue();
+            
+            sessionListTimeStamp.add(timeStamp);
+            sessionListValue.add(value);
+            //System.out.println(sessionListTimeStamp);
+            if(sessionListTimeStamp.size() >= 2)
+            {
+                for(int i = 0 ; i < sessionListTimeStamp.size(); i++)
+                {
+                    if( sessionListTimeStamp.size() > i+1)
+                    {
+                        if((sessionListTimeStamp.get(i+1) - sessionListTimeStamp.get(i)) >= gap)
+                        {
+                            
+                            //for( int j=0; j < i+1 ; j++) 
+                            //{
+                            //    sessionEventHash.put(sessionListTimeStamp.get(j), sessionListValue.get(j));
+                            //} 
+                            //System.out.println(sessionEventHash);
+
+                            //System.out.println(sessionListTimeStamp.get(i));
+                            
+                            // For the future loop
+                            long varTimeStamp = sessionListTimeStamp.get(i+1);
+                            long varValue = sessionListValue.get(i+1);
+                            
+                            // Remove the last element
+                            sessionListTimeStamp.remove(i+1);
+                            sessionListValue.remove(i+1);
+
+                            //System.out.println("after removing" +sessionListTimeStamp);
+                            // add these lists to another list.
+                            List<Long> a = new ArrayList<Long>(sessionListTimeStamp);               // clone of sessionListTimeStamp.
+                            List<Long> b = new ArrayList<Long>(sessionListValue);                   // clone of sessionListTimeStamp.
+                            sessionEventTimeStampListOfList.add(a);
+                            sessionEventValueListOfList.add(b);
+                            //System.out.println(sessionEventTimeStampListOfList + " .... ");
+                            //System.out.println(sessionEventValueListOfList + " .... ");
+
+                            sessionListTimeStamp.clear();
+                            sessionListValue.clear();
+
+                            sessionListTimeStamp.add(varTimeStamp);
+                            sessionListValue.add(varValue);
+                            //System.out.println(sessionListTimeStamp);
+                            //System.out.println(sessionListValue);
+                            //System.out.println("hello");
+                            break;
+                        }
+                    }
+                }
+            }
+
+            /*if( sessionEventHash.containsKey(timeStamp))
+            {
+                sessionEventHash.put(timeStamp, value);
+            }
+            else
+            {
+                sessionEventHash.putIfAbsent(timeStamp, value);		
+            }*/
+        }
+        
     }
     /**
      * This method triggers the complete windows up to the watermark. Remember, a watermark is a special event that
@@ -245,6 +321,19 @@ public class WindowAggregationOperator {
             }
         }
         
+        if(this.window.getClass().getSimpleName().equals("SessionWindow"))
+        {
+            for(int i =0; i < sessionEventTimeStampListOfList.size(); i++)          // Over each loop, we have 1 session window
+            {   
+                sum = this.aggregateFunction.aggregate(sessionEventValueListOfList.get(i));                
+                startTime = sessionEventTimeStampListOfList.get(i).get(0);                                                             // first element of the list
+                endTime =   sessionEventTimeStampListOfList.get(i).get(sessionEventTimeStampListOfList.get(i).size()-1) + gap;         // last element of the list + gap size.
+
+                ResultWindow r = new ResultWindow(startTime, endTime, sum);
+                //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
+                resultList.add(r);
+            }
+        }
 
         return resultList;
 
