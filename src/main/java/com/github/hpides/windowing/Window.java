@@ -14,8 +14,6 @@ package com.github.hpides.windowing;
  * Count-based windows have a slightly different notion of start and end times. To avoid to many fields, we use the
  * `startTime` and `endTime` fields for both time and counts. Counting starts at 1 and represents a closed interval on
  * both sides, e.g. a tumbling count window with length 3 will start at 1 and end at 3 (as it has events 1, 2, and 3 in
- * it). The next window starts at 4 and ends at 7, and so on. Also, to keep the watermark completion semantic identical
- * between count- and time-based windows, the last event's timestamp is considered an open interval, i.e., if the last
- * event has a timestamp of 5 and a watermark 5 is received, the count window is complete.
+ * it). The next window starts at 4 and ends at 6, and so on. 
  */
 public class Window {}

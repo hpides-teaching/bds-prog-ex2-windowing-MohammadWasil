@@ -57,18 +57,20 @@ public class WindowShiftTest {
         windowOp.processEvent(new Event(200, 2));
         windowOp.processEvent(new Event(300, 3));
         windowOp.processEvent(new Event(400, 4));
+        
         windowOp.processEvent(new Event(500, 5));
         windowOp.processEvent(new Event(600, 6));
         windowOp.processEvent(new Event(700, 7));
+        
         windowOp.processEvent(new Event(800, 8));
         windowOp.processEvent(new Event(900, 9));
         windowOp.processEvent(new Event(100, 1));
 
         final List<ResultWindow> results = windowOp.processWatermark(2000);
         assertThat(results).containsExactly(
-                new ResultWindow(1, 3,  6L),
-                new ResultWindow(4, 6, 15L),
-                new ResultWindow(7, 9, 24L)
+                new ResultWindow(1, 3,  9L),
+                new ResultWindow(4, 6, 18L),
+                new ResultWindow(7, 9, 18L)
         );
     }
 }

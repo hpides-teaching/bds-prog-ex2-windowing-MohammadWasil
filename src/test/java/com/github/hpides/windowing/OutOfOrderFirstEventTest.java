@@ -83,9 +83,12 @@ public class OutOfOrderFirstEventTest {
         windowOp.processEvent(new Event(200, 2));
         windowOp.processEvent(new Event(100, 1));
         windowOp.processEvent(new Event(1200, 3));
+        
         windowOp.processEvent(new Event(1100, 4));
 
         final List<ResultWindow> results = windowOp.processWatermark(2000);
-        assertThat(results).containsExactly(new ResultWindow(1, 3, 7L));
+        
+        assertThat(results).containsExactly(new ResultWindow(1, 3, 6L));
+        
     }
 }

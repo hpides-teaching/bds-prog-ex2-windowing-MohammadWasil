@@ -79,15 +79,17 @@ public class OutOfOrderStreamTest {
         windowOp.processEvent(new Event( 1,  10));
         windowOp.processEvent(new Event( 3,  30));
         windowOp.processEvent(new Event( 7,  70));
+        
         windowOp.processEvent(new Event( 5,  50));
         windowOp.processEvent(new Event(13, 130));
         windowOp.processEvent(new Event(12, 120));
+        
         windowOp.processEvent(new Event(16, 160));
         windowOp.processEvent(new Event(24, 240));
 
         final List<ResultWindow> results = windowOp.processWatermark(25);
 
-        assertThat(results).containsExactly(new ResultWindow(1, 3, 90L), new ResultWindow(4, 6, 320L));
+        assertThat(results).containsExactly(new ResultWindow(1, 3, 110L), new ResultWindow(4, 6, 300L));
     }
 
 }

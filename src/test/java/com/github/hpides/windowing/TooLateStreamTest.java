@@ -82,13 +82,12 @@ public class TooLateStreamTest {
         windowOp.processEvent(new Event( 10, 1));
         windowOp.processEvent(new Event(100, 2));
         assertThat(windowOp.processWatermark(50)).isEmpty();
-
-        // This should be ignored because it is too late
         windowOp.processEvent(new Event(20, 1000));
 
         windowOp.processEvent(new Event(200, 5));
 
         final List<ResultWindow> results = windowOp.processWatermark(1000);
-        assertThat(results).containsExactly(new ResultWindow(1, 3, 8L));
+
+        assertThat(results).containsExactly(new ResultWindow(1, 3, 1003L));        
     }
 }

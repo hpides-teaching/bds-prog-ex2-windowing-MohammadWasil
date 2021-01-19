@@ -18,10 +18,20 @@ public class InOrderStreamTest {
         windowOp.processEvent(new Event(3, 3));
         windowOp.processEvent(new Event(4, 4));
         windowOp.processEvent(new Event(5, 5));
+        
+        
+        // addded
+        windowOp.processEvent(new Event(6, 6));
+        windowOp.processEvent(new Event(7, 7));
+        windowOp.processEvent(new Event(8, 8));
+        windowOp.processEvent(new Event(9, 9));
+        windowOp.processEvent(new Event(10, 10));
+
+        
 
         final List<ResultWindow> results = windowOp.processWatermark(10);
-
-        assertThat(results).containsExactly(new ResultWindow(0, 10, 15L));
+	
+        assertThat(results).containsExactly(new ResultWindow(0, 10, 55L));
     }
 
     @Test
