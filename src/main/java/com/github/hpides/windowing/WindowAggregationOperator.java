@@ -325,6 +325,16 @@ public class WindowAggregationOperator {
         {
             for(int i =0; i < sessionEventTimeStampListOfList.size(); i++)          // Over each loop, we have 1 session window
             {   
+                for(int j=0; j <sessionEventTimeStampListOfList.get(i).size() ; j++)
+                {
+                    // Ignore any evenet coming after the watermark timestamp.
+                    if(sessionEventTimeStampListOfList.get(i).get(j) > watermarkTimestamp)
+                    {
+                        sessionEventTimeStampListOfList.get(i).remove(j);
+                        sessionEventValueListOfList.get(i).remove(j);
+                        System.out.println("Hello");
+                    }
+                }
                 sum = this.aggregateFunction.aggregate(sessionEventValueListOfList.get(i));                
                 startTime = sessionEventTimeStampListOfList.get(i).get(0);                                                             // first element of the list
                 endTime =   sessionEventTimeStampListOfList.get(i).get(sessionEventTimeStampListOfList.get(i).size()-1) + gap;         // last element of the list + gap size.
