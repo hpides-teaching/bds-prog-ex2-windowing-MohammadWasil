@@ -1,7 +1,7 @@
 package com.github.hpides.windowing;
 
 import java.util.List;
-import java.security.Timestamp;
+
 import java.util.*;
 
 /**
@@ -29,7 +29,9 @@ public class WindowAggregationOperator {
     private final Window window;
     private final AggregateFunction aggregateFunction;
     
-    private HashMap<Long, Long> inOrderStreamTestSumHash = new HashMap<Long, Long>();
+    // the length of the window.
+    private long length;
+
     private long timeStamp;
     private long value;
 
@@ -37,8 +39,12 @@ public class WindowAggregationOperator {
     private long startTime;
     private long endTime;
 
+    
+
+    // /tumbling window
+    private HashMap<Long, Long> inOrderStreamTestSumHash = new HashMap<Long, Long>();
+
     // Temporary variable for sliding window
-    private long length = 10L;
     private long slide = 5L;
     //private List<Long> slidingWindow = Arrays.asList(new Long[10]);
     private HashMap<Long, Long> slidingWindow = new HashMap<Long, Long>();
@@ -57,6 +63,7 @@ public class WindowAggregationOperator {
         // YOUR CODE HERE
         //
         // YOUR CODE HERE END
+        
     }
 
     /**
@@ -75,11 +82,14 @@ public class WindowAggregationOperator {
         // YOUR CODE HERE END
         if(this.window.getClass().getSimpleName().equals("TumblingWindow"))
         {
+            
             // Tumbling window -> Sum Aggreagtion function
             if(this.aggregateFunction.getClass().getSimpleName().equals("SumAggregateFunction") ||
             this.aggregateFunction.getClass().getSimpleName().equals("AvgAggregateFunction") ||
             this.aggregateFunction.getClass().getSimpleName().equals("MedianAggregateFunction") )
             {
+                // get the length of the window.
+                length = ((TumblingWindow) this.window).getLength();
                 timeStamp = event.getTimestamp();
                 value     = event.getValue();
                 // Store the timestamp-value in a hashmap.
@@ -188,21 +198,19 @@ public class WindowAggregationOperator {
                 if(e.getKey() <= watermarkTimestamp)
                 {
                     inOrderStreamTestSum.add(e.getValue());
-                    //System.out.println(inOrderStreamTestSum);
                     // do the aggregation here. 	
                     sum = this.aggregateFunction.aggregate(inOrderStreamTestSum);
                     
                     timeStamp = e.getKey();
-                    if( (10L % timeStamp) != 10L) // start from 0
+                    if( (10L % timeStamp) != length) // start from 0
                     {
                         startTime = 0L;
-                        endTime = startTime + 10L; // 10L is the length of the window.
+                        endTime = startTime + length; // 10L is the length of the window.
                     }
                     else{               // start from next 10 time stamp.
                         startTime = (long)((int)(timeStamp/10) *10 );
-                        endTime = startTime + 10L; // 10L is the length of the window.
+                        endTime = startTime + length; // 10L is the length of the window.
                     }
-                    
                 }
             }
         }
@@ -228,7 +236,7 @@ public class WindowAggregationOperator {
         //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
         resultList.add(r);
         return resultList;
-         
+
         // YOUR CODE HERE END
     }
 }
