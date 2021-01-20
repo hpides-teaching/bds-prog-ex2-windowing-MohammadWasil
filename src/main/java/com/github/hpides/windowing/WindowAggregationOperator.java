@@ -53,6 +53,12 @@ public class WindowAggregationOperator {
     private List<List<Long>> sessionEventTimeStampListOfList = new ArrayList<List<Long>>();
     private List<List<Long>> sessionEventValueListOfList = new ArrayList<List<Long>>();
 
+    // tumbling window count
+    private List<Long> tumblingCountWindow = new ArrayList<Long>();
+    private List<List<Long>> tumblingCountWindowListOfList = new ArrayList<List<Long>>();
+    private List<Long> eventCount = new ArrayList<Long>();
+    private List<List<Long>> eventCountListOfList = new ArrayList<List<Long>>();
+    private Long counter = 0L;
     /**
      * This constructor is called to create a new WindowAggregationOperator with a given window type and aggregation
      * function. You will possibly need to extend this to initialize some variables but do not change the signature.
@@ -230,6 +236,40 @@ public class WindowAggregationOperator {
             }*/
         }
         
+         // Session window
+         if(this.window.getClass().getSimpleName().equals("TumblingCountWindow"))
+         {
+            length = ((TumblingCountWindow) this.window).getLength();
+
+            timeStamp = event.getTimestamp();
+            value     = event.getValue();
+            
+            counter += 1;
+
+            if( tumblingCountWindow.size() < length )
+            {
+                tumblingCountWindow.add(value);
+            }
+            else
+            {
+                // update the countWindow list
+                eventCount.clear();
+                eventCount.add(counter - length );
+                eventCount.add(counter - 1 );
+                
+                List<Long> a = new ArrayList<Long>(eventCount);               // clone of eventCount.
+                eventCountListOfList.add(a);
+
+                // add these lists to another list - nested list
+                List<Long> b = new ArrayList<Long>(tumblingCountWindow);               // clone of tumblingCountWindow.
+                tumblingCountWindowListOfList.add(b);
+                
+                tumblingCountWindow.clear();
+                tumblingCountWindow.add(value);             // add the enxt value to tumblingCountWindow.
+
+            }
+            
+         }
     }
     /**
      * This method triggers the complete windows up to the watermark. Remember, a watermark is a special event that
@@ -345,6 +385,23 @@ public class WindowAggregationOperator {
             }
         }
 
+        //tumblingCountWindowListOfList
+        if(this.window.getClass().getSimpleName().equals("TumblingCountWindow"))
+        {
+            for(int i = 0; i < tumblingCountWindowListOfList.size(); i++)          // Over each loop, we have 1 tumbling count window
+            { 
+                //System.out.println(tumblingCountWindowListOfList.get(i));
+                sum = this.aggregateFunction.aggregate(tumblingCountWindowListOfList.get(i));                
+                
+                startTime = eventCountListOfList.get(i).get(0);     // 0 for the start time
+                endTime = eventCountListOfList.get(i).get(1);       // 1 for the start time
+                
+                ResultWindow r = new ResultWindow(startTime, endTime, sum);
+                //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
+                resultList.add(r);
+            }
+            
+        }
         return resultList;
 
         // YOUR CODE HERE END
