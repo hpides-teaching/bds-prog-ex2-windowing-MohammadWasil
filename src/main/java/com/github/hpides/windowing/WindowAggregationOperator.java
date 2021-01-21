@@ -36,9 +36,12 @@ public class WindowAggregationOperator {
     private long endTime;               // end time of the window.
 
     // /tumbling window
-    private HashMap<Long, Long> inOrderStreamTestSumHash = new HashMap<Long, Long>();     // Hash Maps for tumbling window.
+    //private HashMap<Long, Long> inOrderStreamTestSumHash = new HashMap<Long, Long>();     // Hash Maps for tumbling window.
+    private List<Long> tumblingListTimeStamp = new ArrayList<Long>();
+    private List<Long> tumblingListValue = new ArrayList<Long>();
+    private List<List<Long>> tumblingTimeStampListOfList = new ArrayList<List<Long>>();
+    private List<List<Long>> tumblingValueListOfList = new ArrayList<List<Long>>();
 
-   
     // Sliding window
     private long slide;            // the slide of the window.
     private HashMap<Long, Long> slidingEventHash = new HashMap<Long, Long>();
@@ -46,7 +49,6 @@ public class WindowAggregationOperator {
 
     // session window
     private long gap;
-    private HashMap<Long, Long> sessionEventHash = new HashMap<Long, Long>();
     private List<Long> sessionListTimeStamp = new ArrayList<Long>();
     private List<Long> sessionListValue = new ArrayList<Long>();
 
@@ -103,15 +105,63 @@ public class WindowAggregationOperator {
                 length = ((TumblingWindow) this.window).getLength();
                 timeStamp = event.getTimestamp();
                 value     = event.getValue();
-                // Store the timestamp-value in a hashmap.
-                if( inOrderStreamTestSumHash.containsKey(timeStamp))
+
+                if(tumblingListTimeStamp.size() < length )
                 {
-                    inOrderStreamTestSumHash.put(timeStamp, value);
+                    tumblingListTimeStamp.add(timeStamp);
+                    tumblingListValue.add(value);
+                    
+                    if(tumblingTimeStampListOfList.size() >=1)
+                    {
+                        
+                        int len = tumblingTimeStampListOfList.size();
+                        System.out.println(" ");
+                        if(tumblingTimeStampListOfList.get(len -1 ).size() != length)
+                        {
+                            // replace the last element for timestamp
+                            tumblingTimeStampListOfList.remove(tumblingTimeStampListOfList.get(len -1 ));
+                            List<Long> a = new ArrayList<Long>(tumblingListTimeStamp);               // clone of tumblingListTimeStamp.
+                            tumblingTimeStampListOfList.add(a); 
+
+                            // replace the last element for value
+                            tumblingValueListOfList.remove(tumblingValueListOfList.get(len -1 ));
+                            List<Long> b = new ArrayList<Long>(tumblingListValue);               // clone of tumblingListTimeStamp.
+                            tumblingValueListOfList.add(b); 
+                        }
+                        else
+                        {
+                            // add the tumbling 
+                            List<Long> a = new ArrayList<Long>(tumblingListTimeStamp);               // clone of tumblingListTimeStamp.
+                            tumblingTimeStampListOfList.add(a); 
+
+                            // add the tumbling 
+                            List<Long> b = new ArrayList<Long>(tumblingListValue);               // clone of tumblingListTimeStamp.
+                            tumblingValueListOfList.add(b); 
+                        }
+                    }
+                    else
+                    {
+                        // add the tumbling 
+                        List<Long> a = new ArrayList<Long>(tumblingListTimeStamp);               // clone of tumblingListTimeStamp.
+                        tumblingTimeStampListOfList.add(a);
+                        
+                        // add the tumbling 
+                        List<Long> b = new ArrayList<Long>(tumblingListValue);               // clone of tumblingListTimeStamp.
+                        tumblingValueListOfList.add(b);
+                    }
                 }
-                else
+                else if(tumblingListTimeStamp.size() >= length )
                 {
-                    inOrderStreamTestSumHash.putIfAbsent(timeStamp, value);		
+                    tumblingListTimeStamp.clear();
+                    tumblingListTimeStamp.add(timeStamp);
+
+                    tumblingListValue.clear();
+                    tumblingListValue.add(value);
                 }
+               
+                
+                //System.out.println("Secd:" + tumblingTimeStampListOfList);
+                //System.out.println("Secd:" + tumblingValueListOfList);
             }
         }
 
@@ -300,8 +350,22 @@ public class WindowAggregationOperator {
         // In Order stream Test for Tumbling Window. Done. 
         if(this.window.getClass().getSimpleName().equals("TumblingWindow"))
         {
+            for(int i = 0; i < tumblingTimeStampListOfList.size(); i++)          // Over each loop, we have 1 tumbling count window
+            { 
+                 //System.out.println(tumblingCountWindowListOfList.get(i));
+                 sum = this.aggregateFunction.aggregate(tumblingValueListOfList.get(i));                
+                
+                 startTime = i ;    // 0 for the start time
+                 endTime = i+length;  // 1 for the start time
+                 
+                 ResultWindow r = new ResultWindow(startTime, endTime, sum);
+                 //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
+                 resultList.add(r);
+            }
+
+            /*
+            Previous answer.
             long i = 0L;
-            
             while(i <= (length-1))
             {
                 List<Long> inOrderStreamTestSum = new ArrayList<Long>();
@@ -314,15 +378,15 @@ public class WindowAggregationOperator {
                         sum = this.aggregateFunction.aggregate(inOrderStreamTestSum);
                         
                         //timeStamp = e.getKey();
-                        /*if( (10L % timeStamp) != length) // start from 0
-                        {
-                            startTime = 0L;
-                            endTime = startTime + length; // 10L is the length of the window.
-                        }
-                        else{               // start from next 10 time stamp.
-                            startTime = (long)((int)(timeStamp/10) *10 );
-                            endTime = startTime + length; // 10L is the length of the window.
-                        }*/
+                        //if( (10L % timeStamp) != length) // start from 0
+                        //{
+                        //    startTime = 0L;
+                        //    endTime = startTime + length; // 10L is the length of the window.
+                        //}
+                        //else{               // start from next 10 time stamp.
+                        //    startTime = (long)((int)(timeStamp/10) *10 );
+                        //    endTime = startTime + length; // 10L is the length of the window.
+                        //}
                         startTime = i;
                         endTime = length + i;
                     }
@@ -332,6 +396,7 @@ public class WindowAggregationOperator {
             ResultWindow r = new ResultWindow(startTime, endTime, sum);
             //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
             resultList.add(r);
+            */
         }
 
         
