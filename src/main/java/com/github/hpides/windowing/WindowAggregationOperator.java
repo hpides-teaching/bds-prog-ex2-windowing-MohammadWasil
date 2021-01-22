@@ -269,7 +269,7 @@ public class WindowAggregationOperator {
                 
                 finalTimeStamp = timeStampList;
                 finalValue = valueList;
-                System.out.println(finalTimeStamp);
+                //System.out.println(finalTimeStamp);
                 //System.out.println("outer: "+finalTimeStamp) ;
 
                 // check whether the window are similar
@@ -473,28 +473,25 @@ public class WindowAggregationOperator {
         {
             //while(j <= (length))
             //{   
-                
-                
                 for(int i = 0; i < finalTimeStamp.size(); i++)          // Over each loop, we have 1 tumbling count window
                 { 
                     startTime = i*length ;    // 0 for the start time
                     endTime = (i+1)*length;  // 1 for the start time  
                     List<Long> tempa = new ArrayList<Long>();
-                    System.out.println(endTime);
-                    //ystem.out.println(watermarkTimestamp);
-                    
-                        // Ignore the whole window if there is an after the watermark timestamp.
-                        if(watermarkTimestamp - endTime <= length)
-                        {
-                            
-                            tempa = finalValue.get(i);
-                            System.out.println(tempa);
-                            sum = this.aggregateFunction.aggregate(tempa);                             
-                            ResultWindow r = new ResultWindow(startTime, endTime, sum);
-                            //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
-                            resultList.add(r);   
-                            //break;
-                        }                                  
+                    //System.out.println(endTime);
+                    //System.out.println(watermarkTimestamp);
+
+                    // Ignore the whole window if there is an after the watermark timestamp.
+                    if((watermarkTimestamp - endTime <= length) && (watermarkTimestamp >= endTime))
+                    {                        
+                        tempa = finalValue.get(i);
+                        System.out.println(tempa);
+                        sum = this.aggregateFunction.aggregate(tempa);                             
+                        ResultWindow r = new ResultWindow(startTime, endTime, sum);
+                        //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
+                        resultList.add(r);   
+                        //break;
+                    }                                  
                 }      
                 //j+=length;
                 /*
