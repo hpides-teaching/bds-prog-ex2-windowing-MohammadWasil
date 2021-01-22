@@ -327,6 +327,10 @@ public class WindowAggregationOperator {
                             // add these lists to another list.
                             List<Long> a = new ArrayList<Long>(sessionListTimeStamp);               // clone of sessionListTimeStamp.
                             List<Long> b = new ArrayList<Long>(sessionListValue);                   // clone of sessionListTimeStamp.
+                            System.out.println("a: " + a);
+                            Collections.sort(a);
+                            Collections.sort(b);
+
                             sessionEventTimeStampListOfList.add(a);
                             sessionEventValueListOfList.add(b);
                             //System.out.println(sessionEventTimeStampListOfList + " .... ");
@@ -345,6 +349,7 @@ public class WindowAggregationOperator {
                     }
                 }
             }
+            System.out.println(sessionEventTimeStampListOfList);
 
             /*if( sessionEventHash.containsKey(timeStamp))
             {
