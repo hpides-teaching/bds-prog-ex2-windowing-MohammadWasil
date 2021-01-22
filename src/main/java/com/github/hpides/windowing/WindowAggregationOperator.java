@@ -1,6 +1,7 @@
 package com.github.hpides.windowing;
 import java.util.*;
-import java.util.Collections;;
+import java.util.Collections;
+
 
 
 
@@ -44,8 +45,10 @@ public class WindowAggregationOperator {
     private List<Long> tumblingListValue = new ArrayList<Long>();
     private List<List<Long>> tumblingTimeStampListOfList = new ArrayList<List<Long>>();
     private List<List<Long>> tumblingValueListOfList = new ArrayList<List<Long>>();
-    private Set<Long> uniqueSet = new HashSet<Long>();
-    private List<List<Long>> finalList = new ArrayList<List<Long>>();
+
+    private List<List<Long>> finalTimeStamp = new ArrayList<List<Long>>();
+    private List<List<Long>> finalValue = new ArrayList<List<Long>>();
+    
 
     private Long previousStartTime;
     private Long previousEndTime;
@@ -125,7 +128,7 @@ public class WindowAggregationOperator {
                 
                 if(tumblingListTimeStamp.size() < length )
                 {
-                    for(int i=0; i <= (length*3) ; i+=length)
+                    for(int i=0; i <= (length*2) ; i+=length)
                     {
                         startTime = i;
                         endTime = i + length;
@@ -213,8 +216,8 @@ public class WindowAggregationOperator {
                         List<Long> b = new ArrayList<Long>(tumblingListValue);               // clone of tumblingListTimeStamp.
                         tumblingValueListOfList.add(b);
                     }
-                    uniqueSet.add(previousEndTime);
-                    windowCount = uniqueSet.size();
+                    //uniqueSet.add(previousEndTime);
+                    //windowCount = uniqueSet.size();
                 }
                 else if(tumblingListTimeStamp.size() >= length )
                 {
@@ -224,7 +227,50 @@ public class WindowAggregationOperator {
                     tumblingListValue.clear();
                     tumblingListValue.add(value);
                 }
+                //System.out.println(tumblingTimeStampListOfList);
+                
 
+                //long startTime = 0L;
+                //long endTime = 0L;
+                //int length=10;
+
+                // combine the list with timetamp hin same range.
+                List<List<Long>> timeStampList = new ArrayList<List<Long>>();
+                List<List<Long>> valueList = new ArrayList<List<Long>>();
+                for(int i=0; i<= 2; i++)
+                {
+                    List<Long> smallerList = new ArrayList<Long>();
+                    List<Long> smallerListValue = new ArrayList<Long>();
+                    startTime = i*length ;   
+                    endTime = (i+1)*length;  
+                    for(int j=0; j<tumblingTimeStampListOfList.size() ; j++)
+                    {
+                        
+                        for(int k=0; k<tumblingTimeStampListOfList.get(j).size(); k++)
+                        {
+                            if(tumblingTimeStampListOfList.get(j).get(k) >= startTime && tumblingTimeStampListOfList.get(j).get(k)<endTime)
+                            {
+                                smallerList.add(tumblingTimeStampListOfList.get(j).get(k));
+                                smallerListValue.add(tumblingValueListOfList.get(j).get(k));
+                            }
+                        }
+                    }
+                    List<Long> tempList = new ArrayList<Long>(smallerList); 
+                    Collections.sort(tempList);
+                    timeStampList.add(tempList);
+                    timeStampList.removeAll(Collections.singleton(new ArrayList<>()));
+
+                    List<Long> tempListValue = new ArrayList<Long>(smallerListValue); 
+                    Collections.sort(tempListValue);
+                    valueList.add(tempListValue);
+                    valueList.removeAll(Collections.singleton(new ArrayList<>()));
+                    //System.out.println("inner: " + timeStampList) ;
+                }   
+                
+                finalTimeStamp = timeStampList;
+                finalValue = valueList;
+                System.out.println(finalTimeStamp);
+                //System.out.println("outer: "+finalTimeStamp) ;
 
                 // check whether the window are similar
                 /*List<Long> a = new ArrayList<Long>();
@@ -426,20 +472,30 @@ public class WindowAggregationOperator {
         if(this.window.getClass().getSimpleName().equals("TumblingWindow"))
         {
             //while(j <= (length))
-            //{    
-                for(int i = 0; i < tumblingTimeStampListOfList.size(); i++)          // Over each loop, we have 1 tumbling count window
+            //{   
+                
+                
+                for(int i = 0; i < finalTimeStamp.size(); i++)          // Over each loop, we have 1 tumbling count window
                 { 
-                    //System.out.println(tumblingCountWindowListOfList.get(i));
-                    sum = this.aggregateFunction.aggregate(tumblingValueListOfList.get(i));      
-                    //for(int j = 0 ; j < length ; j+=length)
-                    //{
-                        startTime = i*length ;    // 0 for the start time
-                        endTime = (i+1)*length;  // 1 for the start time    
-                        ResultWindow r = new ResultWindow(startTime, endTime, sum);
-                        //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
-                        resultList.add(r);    
-                    //}          
-                }       
+                    startTime = i*length ;    // 0 for the start time
+                    endTime = (i+1)*length;  // 1 for the start time  
+                    List<Long> tempa = new ArrayList<Long>();
+                    System.out.println(endTime);
+                    //ystem.out.println(watermarkTimestamp);
+                    
+                        // Ignore the whole window if there is an after the watermark timestamp.
+                        if(watermarkTimestamp - endTime <= length)
+                        {
+                            
+                            tempa = finalValue.get(i);
+                            System.out.println(tempa);
+                            sum = this.aggregateFunction.aggregate(tempa);                             
+                            ResultWindow r = new ResultWindow(startTime, endTime, sum);
+                            //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
+                            resultList.add(r);   
+                            //break;
+                        }                                  
+                }      
                 //j+=length;
                 /*
                 for(int i = 0; i < tumblingTimeStampListOfList.size(); i++)          // Over each loop, we have 1 tumbling count window
@@ -569,6 +625,8 @@ public class WindowAggregationOperator {
                 }
             }*/
         
+            
+
             for(int i =0; i < sessionEventTimeStampListOfList.size(); i++)          // Over each loop, we have 1 session window
             {   
                 for(int j=0; j <sessionEventTimeStampListOfList.get(i).size() ; j++)
@@ -578,7 +636,7 @@ public class WindowAggregationOperator {
                     {
                         sessionEventTimeStampListOfList.get(i).remove(j);
                         sessionEventValueListOfList.get(i).remove(j);
-                        System.out.println("Hello");
+                        //System.out.println("Hello");
                     }
                 }
                 sum = this.aggregateFunction.aggregate(sessionEventValueListOfList.get(i));                
