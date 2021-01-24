@@ -208,7 +208,7 @@ public class WindowAggregationOperator {
                 tumblingListValue.add(value);
             }
             
-            // combine the list with timetamp with same range.
+            // combine the list with timetamp within same range.
             List<List<Long>> timeStampList = new ArrayList<List<Long>>();
             List<List<Long>> valueList = new ArrayList<List<Long>>();
             for(int i=0; i<= 2; i++)
@@ -337,7 +337,6 @@ public class WindowAggregationOperator {
                 
                 tumblingCountWindow.clear();
                 tumblingCountWindow.add(value);             // add the enxt value to tumblingCountWindow.
-
             }
             
          }
@@ -449,44 +448,6 @@ public class WindowAggregationOperator {
                     }
                 }
             }
-
-            /*
-            if(timeStampList.size()>0)
-            {
-                System.out.println("runnning");
-                List<Long> a = new ArrayList<Long>(timeStampList);
-                slidingTimeStampListOfList.add(a);
-                List<Long> b = new ArrayList<Long>(valueList);
-                slidingValueListOfList.add(b);                
-            }
-            */
-            //System.out.println(slidingTimeStampListOfList);
-            //System.out.println(slidingValueListOfList);
-
-            //slidingTimeStampListOfList.clear();
-            //slidingValueListOfList.clear();
-
-            /*long i = 0L;
-            while(i <= 5)
-            {
-                List<Long> inOrderStreamTestSum = new ArrayList<Long>();
-                for(Map.Entry<Long, Long> e: slidingEventHash.entrySet())
-                {                    
-                    if((e.getKey() >= i) && (e.getKey() < (length+i)) && (e.getKey() < watermarkTimestamp) )
-                    {
-                        inOrderStreamTestSum.add(e.getValue());
-                        // do the aggregation here. 	
-                        sum = this.aggregateFunction.aggregate(inOrderStreamTestSum);
-                        startTime = i;
-                        endTime = length + i;
-                    }
-                }
-                i+=slide;
-         
-                ResultWindow r = new ResultWindow(startTime, endTime, sum);
-                //final List<ResultWindow> resultList = new ArrayList<ResultWindow>( Arrays.asList(r) ) ;
-                resultList.add(r);
-            }*/
         }
         
         // Session Window
