@@ -208,7 +208,7 @@ public class WindowAggregationOperator {
                 tumblingListValue.add(value);
             }
             
-            // combine the list with timetamp within same range.
+            // combine the list with timetamp with same range.
             List<List<Long>> timeStampList = new ArrayList<List<Long>>();
             List<List<Long>> valueList = new ArrayList<List<Long>>();
             for(int i=0; i<= 2; i++)
