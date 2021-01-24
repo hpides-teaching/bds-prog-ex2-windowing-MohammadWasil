@@ -109,7 +109,6 @@ public class WindowAggregationOperator {
      * @param event The event that should be processed.
      */
     public void processEvent(final Event event) {
-	    //System.out.println("Process Event");
         // YOUR CODE HERE
         //
         // YOUR CODE HERE END
@@ -124,7 +123,9 @@ public class WindowAggregationOperator {
             
             if(tumblingListTimeStamp.size() < length )
             {
-                for(int i=0; i <= (length*2) ; i+=length)
+                // we dont knwo how more the events will come.
+                // SO, we will process the event till the 5 times the length of the window.
+                for(int i=0; i <= (length*5) ; i+=length)
                 {
                     startTime = i;
                     endTime = i + length;
@@ -208,10 +209,10 @@ public class WindowAggregationOperator {
                 tumblingListValue.add(value);
             }
             
-            // combine the list with timetamp within same range.
+            // combine the list with timetamp with same range.
             List<List<Long>> timeStampList = new ArrayList<List<Long>>();
             List<List<Long>> valueList = new ArrayList<List<Long>>();
-            for(int i=0; i<= 2; i++)
+            for(int i=0; i<=30; i++)
             {
                 List<Long> smallerList = new ArrayList<Long>();
                 List<Long> smallerListValue = new ArrayList<Long>();
@@ -287,7 +288,6 @@ public class WindowAggregationOperator {
                             // add these lists to another list.
                             List<Long> a = new ArrayList<Long>(sessionListTimeStamp);               // clone of sessionListTimeStamp.
                             List<Long> b = new ArrayList<Long>(sessionListValue);                   // clone of sessionListTimeStamp.
-                            System.out.println("a: " + a);
                             Collections.sort(a);
                             Collections.sort(b);
 
@@ -380,7 +380,6 @@ public class WindowAggregationOperator {
                 if((watermarkTimestamp - endTime <= length) && (watermarkTimestamp >= endTime))
                 {                        
                     tempa = finalValue.get(i);
-                    System.out.println(tempa);
                     aggregate = this.aggregateFunction.aggregate(tempa);                             
                     ResultWindow r = new ResultWindow(startTime, endTime, aggregate);
                     resultList.add(r);   
@@ -395,7 +394,7 @@ public class WindowAggregationOperator {
             Collections.sort(slidingValue);
             List<Long> timeStampList = new ArrayList<Long>();
             List<Long> valueList = new ArrayList<Long>();
-            for(int i=0; i<=15; i+=slide)
+            for(int i=0; i<=(length+slide); i+=slide)
             {
                 startTime = i ;   
                 endTime = i+length;  
@@ -490,7 +489,6 @@ public class WindowAggregationOperator {
             
         }
         return resultList;
-
         // YOUR CODE HERE END
     }
 }
